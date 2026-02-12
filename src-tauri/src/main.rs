@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod ai;
 mod seed;
 
 use rusqlite::{Connection, Result as SqliteResult};
@@ -68,8 +69,8 @@ struct UpdateNodeInput {
     y: Option<f64>,
 }
 
-struct AppState {
-    db: Mutex<Connection>,
+pub struct AppState {
+    pub db: Mutex<Connection>,
 }
 
 fn init_database() -> SqliteResult<Connection> {
@@ -119,6 +120,33 @@ fn init_database() -> SqliteResult<Connection> {
             markdown,
             content='nodes',
             content_rowid='rowid'
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS research_jobs (
+            id TEXT PRIMARY KEY,
+            node_id TEXT NOT NULL,
+            job_type TEXT NOT NULL,
+            status TEXT NOT NULL,
+            result_json TEXT,
+            error_message TEXT,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY(node_id) REFERENCES nodes(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS llm_cache (
+            hash TEXT PRIMARY KEY,
+            prompt_hash TEXT NOT NULL,
+            response TEXT NOT NULL,
+            model TEXT NOT NULL,
+            tokens_used INTEGER,
+            created_at INTEGER NOT NULL
         )",
         [],
     )?;
@@ -426,7 +454,11 @@ fn main() {
             get_edges,
             create_edge,
             delete_edge,
-            search_nodes
+            search_nodes,
+            ai::research::start_research,
+            ai::research::get_research_status,
+            ai::research::get_research_results,
+            ai::research::cancel_research
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
