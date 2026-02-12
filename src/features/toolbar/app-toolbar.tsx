@@ -1,10 +1,13 @@
 import { searchNodes } from "@/actions/nodes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { downloadFile, exportTreeAsMarkdown } from "@/features/export/export-markdown";
 import { useStore } from "@/lib/store";
 import {
   Brain,
   Columns,
+  Download,
+  LayoutGrid,
   Maximize,
   Maximize2,
   PanelLeft,
@@ -17,6 +20,7 @@ import { useState } from "react";
 interface AppToolbarProps {
   onAddNode: () => void;
   onFitView: () => void;
+  onAutoLayout?: () => void;
   onToggleResearch?: () => void;
   showResearch?: boolean;
 }
@@ -24,6 +28,7 @@ interface AppToolbarProps {
 export function AppToolbar({
   onAddNode,
   onFitView,
+  onAutoLayout,
   onToggleResearch,
   showResearch,
 }: AppToolbarProps) {
@@ -84,9 +89,29 @@ export function AppToolbar({
           Fit View
         </Button>
 
+        {onAutoLayout && (
+          <Button size="sm" variant="outline" onClick={onAutoLayout} className="gap-2">
+            <LayoutGrid className="w-4 h-4" />
+            Auto Layout
+          </Button>
+        )}
+
         <Button size="sm" variant="outline" onClick={toggleSidebar} className="gap-2">
           {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
           {sidebarOpen ? "Hide" : "Show"} Sidebar
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => {
+            const md = exportTreeAsMarkdown(nodes);
+            downloadFile(md, "kervana-export.md", "text/markdown");
+          }}
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Export
         </Button>
       </div>
 

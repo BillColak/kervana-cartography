@@ -13,6 +13,7 @@
     "format": "biome format --write ."
   },
   "dependencies": {
+    "@dagrejs/dagre": "^2.0.4",
     "@platejs/autoformat": "^52.0.11",
     "@platejs/basic-nodes": "^52.0.11",
     "@platejs/basic-styles": "^52.0.11",

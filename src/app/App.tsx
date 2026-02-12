@@ -3,16 +3,28 @@ import { NoteEditor } from "@/features/editor/note-editor";
 import { ResearchPanel } from "@/features/research/research-panel";
 import { AppSidebar } from "@/features/sidebar/app-sidebar";
 import { AppToolbar } from "@/features/toolbar/app-toolbar";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "@/lib/store";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 function App() {
   const { selectedNodeId, view, sidebarOpen } = useStore();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [fitViewTrigger, setFitViewTrigger] = useState(0);
+  const [autoLayoutTrigger, setAutoLayoutTrigger] = useState(0);
   const [showResearch, setShowResearch] = useState(false);
 
   const showEditor = selectedNodeId && view === "split";
+
+  const handleFitView = useCallback(() => setFitViewTrigger((p) => p + 1), []);
+  const handleAutoLayout = useCallback(() => setAutoLayoutTrigger((p) => p + 1), []);
+  const handleToggleResearch = useCallback(() => setShowResearch((p) => !p), []);
+
+  useKeyboardShortcuts({
+    onAddNode: () => setAddDialogOpen(true),
+    onFitView: handleFitView,
+    onToggleResearch: handleToggleResearch,
+  });
 
   return (
     <div className="h-screen w-screen flex overflow-hidden">
@@ -21,8 +33,9 @@ function App() {
       <div className="flex-1 flex flex-col">
         <AppToolbar
           onAddNode={() => setAddDialogOpen(true)}
-          onFitView={() => setFitViewTrigger((prev) => prev + 1)}
-          onToggleResearch={() => setShowResearch((prev) => !prev)}
+          onFitView={handleFitView}
+          onAutoLayout={handleAutoLayout}
+          onToggleResearch={handleToggleResearch}
           showResearch={showResearch}
         />
 
@@ -32,6 +45,7 @@ function App() {
               addDialogOpen={addDialogOpen}
               setAddDialogOpen={setAddDialogOpen}
               fitViewTrigger={fitViewTrigger}
+              autoLayoutTrigger={autoLayoutTrigger}
             />
           </div>
 

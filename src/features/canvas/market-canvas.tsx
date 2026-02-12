@@ -19,18 +19,21 @@ import { getAllNodes, updateNode } from "@/actions/nodes";
 import { useStore } from "@/lib/store";
 import type { MarketNodeData } from "@/types/market";
 import { AddNodeDialog } from "./add-node-dialog";
+import { getLayoutedElements } from "./auto-layout";
 import { nodeTypes } from "./nodes";
 
 interface MarketCanvasProps {
   addDialogOpen: boolean;
   setAddDialogOpen: (open: boolean) => void;
   fitViewTrigger: number;
+  autoLayoutTrigger?: number;
 }
 
 export function MarketCanvas({
   addDialogOpen,
   setAddDialogOpen,
   fitViewTrigger,
+  autoLayoutTrigger = 0,
 }: MarketCanvasProps) {
   const {
     nodes: storeNodes,
@@ -104,6 +107,26 @@ export function MarketCanvas({
       reactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
     }
   }, [fitViewTrigger]);
+
+  // Handle auto-layout trigger
+  // biome-ignore lint/correctness/useExhaustiveDependencies: triggered by autoLayoutTrigger only
+  useEffect(() => {
+    if (autoLayoutTrigger > 0 && nodes.length > 0) {
+      const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges);
+      setNodesState(layoutedNodes);
+      setEdgesState(layoutedEdges);
+
+      // Save new positions to backend
+      for (const node of layoutedNodes) {
+        updateNode(node.id, { x: node.position.x, y: node.position.y }).catch(console.error);
+      }
+
+      // Fit view after layout
+      setTimeout(() => {
+        reactFlowInstance.current?.fitView({ padding: 0.2, duration: 300 });
+      }, 50);
+    }
+  }, [autoLayoutTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="w-full h-full bg-gray-50">
