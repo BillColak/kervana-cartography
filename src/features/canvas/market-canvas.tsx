@@ -75,7 +75,9 @@ export function MarketCanvas({
       id: edge.id,
       source: edge.sourceId,
       target: edge.targetId,
-      style: { stroke: edge.color },
+      type: "smoothstep",
+      animated: false,
+      style: { stroke: edge.color, strokeWidth: 2 },
     }));
     setEdgesState(flowEdges);
   }, [storeEdges, setEdgesState]);
@@ -142,11 +144,14 @@ export function MarketCanvas({
           reactFlowInstance.current = instance;
         }}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={{ type: "smoothstep", style: { strokeWidth: 2 } }}
+        connectionLineStyle={{ strokeWidth: 2, stroke: "#94a3b8" }}
         fitView
+        proOptions={{ hideAttribution: true }}
       >
-        <Background />
+        <Background gap={20} size={1} />
         <Controls />
-        <MiniMap />
+        <MiniMap maskColor="rgba(0,0,0,0.1)" />
       </ReactFlow>
 
       <AddNodeDialog
