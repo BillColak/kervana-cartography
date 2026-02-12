@@ -9,6 +9,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useResearchStore } from "@/lib/research-store";
 import { useStore } from "@/lib/store";
 import type { MarketNodeData, ResearchStatus } from "@/types/market";
 
@@ -30,6 +31,8 @@ export function CanvasContextMenu({
   selectedNode,
 }: CanvasContextMenuProps) {
   const { setView, selectNode, updateNode: updateStoreNode } = useStore();
+  const { startNodeResearch, isNodeResearching } = useResearchStore();
+  const isResearching = selectedNode ? isNodeResearching(selectedNode.id) : false;
 
   const handleEdit = () => {
     if (selectedNode) {
@@ -79,6 +82,27 @@ export function CanvasContextMenu({
           <>
             <ContextMenuItem onClick={handleEdit}>Edit</ContextMenuItem>
             <ContextMenuItem onClick={handleAddChild}>Add Child</ContextMenuItem>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuItem
+              onClick={() => selectedNode && startNodeResearch(selectedNode.id, "EXPAND")}
+              disabled={isResearching}
+            >
+              {isResearching ? "Researching..." : "🧠 Expand with AI"}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => selectedNode && startNodeResearch(selectedNode.id, "PAIN_POINTS")}
+              disabled={isResearching}
+            >
+              🎯 Discover Pain Points
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => selectedNode && startNodeResearch(selectedNode.id, "VALIDATE")}
+              disabled={isResearching}
+            >
+              📊 Validate Niche
+            </ContextMenuItem>
 
             <ContextMenuSeparator />
 

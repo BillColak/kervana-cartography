@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStore } from "@/lib/store";
 import {
+  Brain,
   Columns,
   Maximize,
   Maximize2,
@@ -16,9 +17,16 @@ import { useState } from "react";
 interface AppToolbarProps {
   onAddNode: () => void;
   onFitView: () => void;
+  onToggleResearch?: () => void;
+  showResearch?: boolean;
 }
 
-export function AppToolbar({ onAddNode, onFitView }: AppToolbarProps) {
+export function AppToolbar({
+  onAddNode,
+  onFitView,
+  onToggleResearch,
+  showResearch,
+}: AppToolbarProps) {
   const { nodes, selectedNodeId, view, setView, sidebarOpen, toggleSidebar, selectNode } =
     useStore();
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,6 +128,19 @@ export function AppToolbar({ onAddNode, onFitView }: AppToolbarProps) {
 
       {/* Right: View mode & Breadcrumb */}
       <div className="flex items-center gap-4">
+        {/* Research toggle */}
+        {onToggleResearch && (
+          <Button
+            size="sm"
+            variant={showResearch ? "default" : "outline"}
+            onClick={onToggleResearch}
+            className="gap-1 h-8"
+          >
+            <Brain className="w-4 h-4" />
+            Research
+          </Button>
+        )}
+
         {/* View mode toggle */}
         <div className="flex items-center gap-1 border border-gray-200 rounded-md p-1">
           <Button
