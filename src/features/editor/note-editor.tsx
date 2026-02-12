@@ -164,14 +164,46 @@ export function NoteEditor() {
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold">{selectedNode.label}</h3>
-          <p className="text-sm text-gray-500 capitalize">{selectedNode.level}</p>
+      <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mb-1">
+          {(() => {
+            const path: string[] = [];
+            let current = selectedNode;
+            while (current) {
+              path.unshift(current.label);
+              const parent = nodes.find((n) => n.id === current.parentId);
+              if (!parent) break;
+              current = parent;
+            }
+            return path.map((label, i) => (
+              <span key={label} className="flex items-center gap-1">
+                {i > 0 && <span>/</span>}
+                <span className={i === path.length - 1 ? "text-gray-600 dark:text-gray-300" : ""}>
+                  {label}
+                </span>
+              </span>
+            ));
+          })()}
         </div>
-        <Button onClick={() => selectNode(null)} variant="outline" size="sm">
-          Close
-        </Button>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedNode.color }} />
+            <h3 className="font-semibold text-sm">{selectedNode.label}</h3>
+            <span className="text-xs text-gray-400 dark:text-gray-500 capitalize">
+              {selectedNode.level.replace("-", " ")}
+            </span>
+          </div>
+          <Button
+            onClick={() => selectNode(null)}
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+          >
+            ✕
+          </Button>
+        </div>
       </div>
 
       {/* Scrollable content */}
