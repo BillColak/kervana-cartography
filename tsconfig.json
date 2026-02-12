@@ -19,6 +19,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "types": [],
 
     /* Path alias */
     "baseUrl": ".",
@@ -26,6 +27,7 @@
       "@/*": ["./src/*"]
     }
   },
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test"],
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -117,3 +117,82 @@ pub fn validate_niche_user(
         node_label, pains, auds, node_label
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_expand_system_contains_json_schema() {
+        let prompt = expand_node_system();
+        assert!(prompt.contains("suggestions"));
+        assert!(prompt.contains("label"));
+        assert!(prompt.contains("pain_points"));
+        assert!(prompt.contains("competition_level"));
+    }
+
+    #[test]
+    fn test_expand_user_with_ancestors() {
+        let result = expand_node_user("Fitness", &["Health".to_string(), "Wellness".to_string()]);
+        assert!(result.contains("Health > Wellness > Fitness"));
+        assert!(result.contains("sub-niches under \"Fitness\""));
+    }
+
+    #[test]
+    fn test_expand_user_no_ancestors() {
+        let result = expand_node_user("Health", &[]);
+        assert!(result.contains("Market path: Health"));
+        assert!(result.contains("sub-niches under \"Health\""));
+        assert!(!result.contains(" > "));
+    }
+
+    #[test]
+    fn test_pain_points_system_contains_schema() {
+        let prompt = pain_points_system();
+        assert!(prompt.contains("frustration"));
+        assert!(prompt.contains("user_quote"));
+        assert!(prompt.contains("severity"));
+    }
+
+    #[test]
+    fn test_pain_points_user_with_context() {
+        let result = pain_points_user("Yoga", "Ancient practice for flexibility and mindfulness");
+        assert!(result.contains("Niche: Yoga"));
+        assert!(result.contains("Ancient practice"));
+    }
+
+    #[test]
+    fn test_pain_points_user_empty_context() {
+        let result = pain_points_user("Yoga", "");
+        assert!(result.contains("Niche: Yoga"));
+        assert!(result.contains("Context: "));
+    }
+
+    #[test]
+    fn test_validate_system_contains_schema() {
+        let prompt = validate_niche_system();
+        assert!(prompt.contains("market_depth"));
+        assert!(prompt.contains("competition_intensity"));
+        assert!(prompt.contains("final_score"));
+        assert!(prompt.contains("monetization_potential"));
+    }
+
+    #[test]
+    fn test_validate_user_with_data() {
+        let result = validate_niche_user(
+            "Online Yoga",
+            &["Limited class times".to_string(), "Expensive studios".to_string()],
+            &["Women 25-45".to_string()],
+        );
+        assert!(result.contains("Niche: Online Yoga"));
+        assert!(result.contains("Limited class times"));
+        assert!(result.contains("Expensive studios"));
+        assert!(result.contains("Women 25-45"));
+    }
+
+    #[test]
+    fn test_validate_user_empty_data() {
+        let result = validate_niche_user("Yoga", &[], &[]);
+        assert!(result.contains("None identified yet"));
+    }
+}

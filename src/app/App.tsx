@@ -2,25 +2,42 @@ import { MarketCanvas } from "@/features/canvas/market-canvas";
 import { NoteEditor } from "@/features/editor/note-editor";
 import { ResearchPanel } from "@/features/research/research-panel";
 import { AppSidebar } from "@/features/sidebar/app-sidebar";
+import { ImportDialog } from "@/features/import/import-dialog";
+import { StatsPanel } from "@/features/stats/stats-panel";
 import { AppToolbar } from "@/features/toolbar/app-toolbar";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "@/lib/store";
+import { getAllNodes } from "@/actions/nodes";
+import { getEdges } from "@/actions/edges";
 import { useCallback, useState } from "react";
 
 function App() {
-  const { selectedNodeId, view, sidebarOpen } = useStore();
+  const { selectedNodeId, view, sidebarOpen, setNodes, setEdges } = useStore();
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [fitViewTrigger, setFitViewTrigger] = useState(0);
   const [autoLayoutTrigger, setAutoLayoutTrigger] = useState(0);
   const [showResearch, setShowResearch] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const showEditor = selectedNodeId && view === "split";
 
   const handleFitView = useCallback(() => setFitViewTrigger((p) => p + 1), []);
   const handleAutoLayout = useCallback(() => setAutoLayoutTrigger((p) => p + 1), []);
   const handleToggleResearch = useCallback(() => setShowResearch((p) => !p), []);
+  const handleToggleStats = useCallback(() => setShowStats((p) => !p), []);
+
+  const handleImportComplete = useCallback(async () => {
+    try {
+      const [nodesData, edgesData] = await Promise.all([getAllNodes(), getEdges()]);
+      setNodes(nodesData);
+      setEdges(edgesData);
+    } catch (err) {
+      console.error("Failed to reload after import:", err);
+    }
+  }, [setNodes, setEdges]);
 
   useKeyboardShortcuts({
     onAddNode: () => setAddDialogOpen(true),
@@ -39,6 +56,9 @@ function App() {
           onAutoLayout={handleAutoLayout}
           onToggleResearch={handleToggleResearch}
           showResearch={showResearch}
+          onToggleStats={handleToggleStats}
+          showStats={showStats}
+          onImport={() => setImportDialogOpen(true)}
           isDark={isDark}
           onToggleDarkMode={toggleDarkMode}
         />
@@ -64,8 +84,19 @@ function App() {
               <ResearchPanel />
             </div>
           )}
+
+          {showStats && (
+            <div className="w-80 flex-shrink-0 border-l border-gray-200 dark:border-gray-700">
+              <StatsPanel />
+            </div>
+          )}
         </div>
       </div>
+      <ImportDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onImportComplete={handleImportComplete}
+      />
     </div>
   );
 }

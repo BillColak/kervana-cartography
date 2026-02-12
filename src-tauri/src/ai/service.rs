@@ -5,6 +5,7 @@ use rusqlite::Connection;
 
 use super::models::{ChatCompletionRequest, ChatCompletionResponse, ChatMessage};
 
+#[derive(Debug)]
 pub struct LlmService {
     client: reqwest::Client,
     api_key: String,
@@ -137,5 +138,82 @@ impl LlmService {
         }
 
         Ok(content)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+    use crate::db;
+
+    fn setup_db() -> Mutex<Connection> {
+        let conn = Connection::open_in_memory().unwrap();
+        db::init_tables(&conn).unwrap();
+        Mutex::new(conn)
+    }
+
+    #[test]
+    fn test_cache_key_deterministic() {
+        let key1 = LlmService::cache_key("sys", "user", "model");
+        let key2 = LlmService::cache_key("sys", "user", "model");
+        assert_eq!(key1, key2);
+    }
+
+    #[test]
+    fn test_cache_key_different_inputs() {
+        let key1 = LlmService::cache_key("sys", "user", "model-a");
+        let key2 = LlmService::cache_key("sys", "user", "model-b");
+        assert_ne!(key1, key2);
+    }
+
+    #[test]
+    fn test_cache_key_different_prompts() {
+        let key1 = LlmService::cache_key("system1", "user", "model");
+        let key2 = LlmService::cache_key("system2", "user", "model");
+        assert_ne!(key1, key2);
+    }
+
+    #[test]
+    fn test_cache_store_and_retrieve() {
+        let db = setup_db();
+        let conn = db.lock().unwrap();
+        let hash = "test_hash_123";
+
+        assert!(LlmService::check_cache(&conn, hash).is_none());
+
+        LlmService::store_cache(&conn, hash, "prompt_hash", "response text", "gpt-4", Some(100));
+
+        let cached = LlmService::check_cache(&conn, hash);
+        assert_eq!(cached, Some("response text".to_string()));
+    }
+
+    #[test]
+    fn test_cache_miss() {
+        let db = setup_db();
+        let conn = db.lock().unwrap();
+        assert!(LlmService::check_cache(&conn, "nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_cache_overwrite() {
+        let db = setup_db();
+        let conn = db.lock().unwrap();
+        let hash = "overwrite_test";
+
+        LlmService::store_cache(&conn, hash, "ph", "old response", "gpt-4", Some(50));
+        LlmService::store_cache(&conn, hash, "ph", "new response", "gpt-4", Some(60));
+
+        let cached = LlmService::check_cache(&conn, hash);
+        assert_eq!(cached, Some("new response".to_string()));
+    }
+
+    #[test]
+    fn test_llm_service_missing_api_key() {
+        // Ensure env var is not set
+        std::env::remove_var("OPENAI_API_KEY");
+        let result = LlmService::new();
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("OPENAI_API_KEY"));
     }
 }

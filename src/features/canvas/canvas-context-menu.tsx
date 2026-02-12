@@ -1,4 +1,5 @@
-import { updateNode } from "@/actions/nodes";
+import { createNode, updateNode } from "@/actions/nodes";
+import { createEdge } from "@/actions/edges";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -30,7 +31,7 @@ export function CanvasContextMenu({
   onFitView,
   selectedNode,
 }: CanvasContextMenuProps) {
-  const { setView, selectNode, updateNode: updateStoreNode } = useStore();
+  const { setView, selectNode, updateNode: updateStoreNode, addNode, addEdge } = useStore();
   const { startNodeResearch, isNodeResearching } = useResearchStore();
   const isResearching = selectedNode ? isNodeResearching(selectedNode.id) : false;
 
@@ -67,6 +68,38 @@ export function CanvasContextMenu({
     }
   };
 
+  const handleDuplicate = async () => {
+    if (!selectedNode) return;
+    try {
+      const newNode = await createNode({
+        label: `${selectedNode.label} (copy)`,
+        level: selectedNode.level,
+        color: selectedNode.color,
+        parentId: selectedNode.parentId,
+        x: selectedNode.x + 250,
+        y: selectedNode.y,
+      });
+      // Copy over metadata
+      const updated = await updateNode(newNode.id, {
+        markdown: selectedNode.markdown,
+        tags: selectedNode.tags,
+        painPoints: selectedNode.painPoints,
+        audiences: selectedNode.audiences,
+        competition: selectedNode.competition,
+      });
+      addNode(updated);
+
+      // If it has a parent, create edge too
+      if (selectedNode.parentId) {
+        const edge = await createEdge(selectedNode.parentId, newNode.id, selectedNode.color);
+        addEdge(edge);
+      }
+      selectNode(newNode.id);
+    } catch (err) {
+      console.error("Duplicate failed:", err);
+    }
+  };
+
   const handleDelete = () => {
     if (selectedNode) {
       onDeleteNode(selectedNode.id);
@@ -82,6 +115,7 @@ export function CanvasContextMenu({
           <>
             <ContextMenuItem onClick={handleEdit}>Edit</ContextMenuItem>
             <ContextMenuItem onClick={handleAddChild}>Add Child</ContextMenuItem>
+            <ContextMenuItem onClick={handleDuplicate}>Duplicate</ContextMenuItem>
 
             <ContextMenuSeparator />
 

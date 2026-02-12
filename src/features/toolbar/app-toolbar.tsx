@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { downloadFile, exportTreeAsMarkdown } from "@/features/export/export-markdown";
 import { useStore } from "@/lib/store";
 import {
+  BarChart3,
   Brain,
   Columns,
   Download,
+  FolderInput,
   LayoutGrid,
   Maximize,
   Maximize2,
@@ -25,6 +27,9 @@ interface AppToolbarProps {
   onAutoLayout?: () => void;
   onToggleResearch?: () => void;
   showResearch?: boolean;
+  onToggleStats?: () => void;
+  showStats?: boolean;
+  onImport?: () => void;
   isDark?: boolean;
   onToggleDarkMode?: () => void;
 }
@@ -35,6 +40,9 @@ export function AppToolbar({
   onAutoLayout,
   onToggleResearch,
   showResearch,
+  onToggleStats,
+  showStats,
+  onImport,
   isDark,
   onToggleDarkMode,
 }: AppToolbarProps) {
@@ -120,6 +128,13 @@ export function AppToolbar({
           Export
         </Button>
 
+        {onImport && (
+          <Button size="sm" variant="outline" onClick={onImport} className="gap-2">
+            <FolderInput className="w-4 h-4" />
+            Import
+          </Button>
+        )}
+
         {onToggleDarkMode && (
           <Button size="sm" variant="ghost" onClick={onToggleDarkMode} className="h-8 w-8 p-0">
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -141,13 +156,13 @@ export function AppToolbar({
 
         {/* Search results dropdown */}
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-64 overflow-y-auto z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-64 overflow-y-auto z-50">
             {searchResults.map((node) => (
               <button
                 type="button"
                 key={node.id}
                 onClick={() => handleSearchResultClick(node.id)}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
               >
                 <div
                   className="w-3 h-3 rounded-full flex-shrink-0"
@@ -155,7 +170,7 @@ export function AppToolbar({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{node.label}</div>
-                  <div className="text-xs text-gray-500 capitalize">{node.level}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{node.level}</div>
                 </div>
               </button>
             ))}
@@ -175,6 +190,19 @@ export function AppToolbar({
           >
             <Brain className="w-4 h-4" />
             Research
+          </Button>
+        )}
+
+        {/* Stats toggle */}
+        {onToggleStats && (
+          <Button
+            size="sm"
+            variant={showStats ? "default" : "outline"}
+            onClick={onToggleStats}
+            className="gap-1 h-8"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Stats
           </Button>
         )}
 
