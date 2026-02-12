@@ -42,6 +42,7 @@ export interface CreateNodeInput {
 
 export interface UpdateNodeInput {
   label?: string;
+  color?: string;
   markdown?: string;
   tags?: string[];
   painPoints?: string[];

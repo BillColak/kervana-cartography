@@ -1,5 +1,5 @@
-import type { MarketEdgeData } from "@/types/market";
 import { invokeCommand } from "@/lib/tauri";
+import type { MarketEdgeData } from "@/types/market";
 
 export async function getEdges(): Promise<MarketEdgeData[]> {
   return invokeCommand<MarketEdgeData[]>("get_edges");
@@ -8,7 +8,7 @@ export async function getEdges(): Promise<MarketEdgeData[]> {
 export async function createEdge(
   sourceId: string,
   targetId: string,
-  color: string
+  color: string,
 ): Promise<MarketEdgeData> {
   return invokeCommand<MarketEdgeData>("create_edge", { sourceId, targetId, color });
 }

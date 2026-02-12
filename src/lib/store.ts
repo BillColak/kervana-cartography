@@ -1,5 +1,5 @@
-import { create } from "zustand";
 import type { MarketEdgeData, MarketNodeData } from "@/types/market";
+import { create } from "zustand";
 
 export type ViewMode = "canvas" | "editor" | "split";
 

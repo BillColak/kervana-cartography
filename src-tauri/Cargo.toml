@@ -1,5 +1,5 @@
 [package]
-name = "kervana"
+name = "kervana-cartography"
 version = "0.1.0"
 description = "Market research and validation tool"
 authors = ["you"]

@@ -1,7 +1,7 @@
 {
-  "productName": "Kervana",
+  "productName": "Kervana Cartography",
   "version": "0.1.0",
-  "identifier": "com.kervana.app",
+  "identifier": "com.kervana.cartography",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",

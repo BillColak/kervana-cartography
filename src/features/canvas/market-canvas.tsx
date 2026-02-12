@@ -1,26 +1,46 @@
-import { useCallback, useEffect } from "react";
 import {
-  ReactFlow,
   Background,
-  Controls,
-  MiniMap,
-  useNodesState,
-  useEdgesState,
-  addEdge,
   type Connection,
-  type Node,
+  Controls,
   type Edge,
+  MiniMap,
+  type Node,
+  ReactFlow,
+  type ReactFlowInstance,
+  addEdge,
+  useEdgesState,
+  useNodesState,
 } from "@xyflow/react";
+import { useCallback, useEffect, useRef } from "react";
 import "@xyflow/react/dist/style.css";
 
-import { useStore } from "@/lib/store";
-import { nodeTypes } from "./nodes";
-import type { MarketNodeData } from "@/types/market";
-import { getAllNodes, updateNode } from "@/actions/nodes";
 import { getEdges } from "@/actions/edges";
+import { getAllNodes, updateNode } from "@/actions/nodes";
+import { useStore } from "@/lib/store";
+import type { MarketNodeData } from "@/types/market";
+import { AddNodeDialog } from "./add-node-dialog";
+import { nodeTypes } from "./nodes";
 
-export function MarketCanvas() {
-  const { nodes: storeNodes, edges: storeEdges, setNodes, setEdges, selectNode } = useStore();
+interface MarketCanvasProps {
+  addDialogOpen: boolean;
+  setAddDialogOpen: (open: boolean) => void;
+  fitViewTrigger: number;
+}
+
+export function MarketCanvas({
+  addDialogOpen,
+  setAddDialogOpen,
+  fitViewTrigger,
+}: MarketCanvasProps) {
+  const {
+    nodes: storeNodes,
+    edges: storeEdges,
+    setNodes,
+    setEdges,
+    selectNode,
+    selectedNodeId,
+  } = useStore();
+  const reactFlowInstance = useRef<ReactFlowInstance<Node<MarketNodeData>, Edge> | null>(null);
 
   const [nodes, setNodesState, onNodesChange] = useNodesState<Node<MarketNodeData>>([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState<Edge>([]);
@@ -61,25 +81,29 @@ export function MarketCanvas() {
     (connection: Connection) => {
       setEdgesState((eds) => addEdge(connection, eds));
     },
-    [setEdgesState]
+    [setEdgesState],
   );
 
   const onNodeClick = useCallback(
     (_event: React.MouseEvent, node: Node<MarketNodeData>) => {
       selectNode(node.id);
     },
-    [selectNode]
+    [selectNode],
   );
 
-  const onNodeDragStop = useCallback(
-    (_event: React.MouseEvent, node: Node<MarketNodeData>) => {
-      updateNode(node.id, {
-        x: node.position.x,
-        y: node.position.y,
-      }).catch(console.error);
-    },
-    []
-  );
+  const onNodeDragStop = useCallback((_event: React.MouseEvent, node: Node<MarketNodeData>) => {
+    updateNode(node.id, {
+      x: node.position.x,
+      y: node.position.y,
+    }).catch(console.error);
+  }, []);
+
+  // Handle fitView trigger
+  useEffect(() => {
+    if (fitViewTrigger > 0 && reactFlowInstance.current) {
+      reactFlowInstance.current.fitView({ padding: 0.2, duration: 300 });
+    }
+  }, [fitViewTrigger]);
 
   return (
     <div className="w-full h-full bg-gray-50">
@@ -91,6 +115,9 @@ export function MarketCanvas() {
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onNodeDragStop={onNodeDragStop}
+        onInit={(instance) => {
+          reactFlowInstance.current = instance;
+        }}
         nodeTypes={nodeTypes}
         fitView
       >
@@ -98,6 +125,12 @@ export function MarketCanvas() {
         <Controls />
         <MiniMap />
       </ReactFlow>
+
+      <AddNodeDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        parentId={selectedNodeId}
+      />
     </div>
   );
 }

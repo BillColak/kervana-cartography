@@ -1,4 +1,4 @@
-# Kervana
+# Kervana Cartography
 
 A desktop application for market research and validation, built with Tauri v2 + Vite + React + TypeScript.
 
