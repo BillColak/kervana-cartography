@@ -11,10 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { PlateEditorWrapper } from "@/features/editor/plate-editor";
 import { useStore } from "@/lib/store";
 import type { CompetitionLevel, ResearchStatus } from "@/types/market";
 import { Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Debounce helper
 function useDebounce<T>(value: T, delay: number): T {
@@ -37,7 +38,6 @@ export function NoteEditor() {
   const { nodes, selectedNodeId, selectNode, updateNode: updateStoreNode } = useStore();
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
-  const [markdown, setMarkdown] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [painPoints, setPainPoints] = useState<string[]>([]);
   const [audiences, setAudiences] = useState<string[]>([]);
@@ -49,11 +49,15 @@ export function NoteEditor() {
   const [newPainPoint, setNewPainPoint] = useState("");
   const [newAudience, setNewAudience] = useState("");
 
+  // Markdown is managed by PlateEditor; we track it via ref for debounced saves
+  const markdownRef = useRef(selectedNode?.markdown ?? "");
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Load node data when selected
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only on node id change
   useEffect(() => {
     if (selectedNode) {
-      setMarkdown(selectedNode.markdown);
+      markdownRef.current = selectedNode.markdown;
       setTags(selectedNode.tags);
       setPainPoints(selectedNode.painPoints);
       setAudiences(selectedNode.audiences);
@@ -63,8 +67,25 @@ export function NoteEditor() {
     }
   }, [selectedNode?.id]);
 
-  // Debounced auto-save
-  const debouncedMarkdown = useDebounce(markdown, 500);
+  // Debounced markdown save
+  const onMarkdownChange = useCallback(
+    (md: string) => {
+      markdownRef.current = md;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        if (selectedNode) {
+          updateNode(selectedNode.id, { markdown: markdownRef.current })
+            .then((updatedNode) => {
+              updateStoreNode(selectedNode.id, updatedNode);
+            })
+            .catch(console.error);
+        }
+      }, 500);
+    },
+    [selectedNode, updateStoreNode],
+  );
+
+  // Debounced auto-save for metadata fields
   const debouncedTags = useDebounce(tags, 500);
   const debouncedPainPoints = useDebounce(painPoints, 500);
   const debouncedAudiences = useDebounce(audiences, 500);
@@ -76,7 +97,6 @@ export function NoteEditor() {
   useEffect(() => {
     if (selectedNode) {
       const updates = {
-        markdown: debouncedMarkdown,
         tags: debouncedTags,
         painPoints: debouncedPainPoints,
         audiences: debouncedAudiences,
@@ -92,7 +112,6 @@ export function NoteEditor() {
         .catch(console.error);
     }
   }, [
-    debouncedMarkdown,
     debouncedTags,
     debouncedPainPoints,
     debouncedAudiences,
@@ -304,16 +323,19 @@ export function NoteEditor() {
           </div>
         </div>
 
-        {/* Markdown Editor */}
-        <div className="p-4 flex-1">
-          <Label className="mb-2 block">Notes (Markdown)</Label>
-          <textarea
-            value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
-            className="w-full h-[400px] p-4 border border-gray-200 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-            placeholder="Enter markdown notes..."
-          />
-          <p className="text-xs text-gray-500 mt-2">Auto-saves after 500ms</p>
+        {/* Rich Text Editor */}
+        <div className="flex-1 flex flex-col">
+          <div className="px-4 pt-4 pb-1">
+            <Label className="mb-2 block">Notes</Label>
+          </div>
+          <div className="flex-1 min-h-[300px] border-t border-gray-200">
+            <PlateEditorWrapper
+              nodeId={selectedNode.id}
+              initialMarkdown={selectedNode.markdown}
+              onChange={onMarkdownChange}
+            />
+          </div>
+          <p className="text-xs text-gray-500 px-4 py-2">Auto-saves after 500ms</p>
         </div>
       </div>
     </div>
