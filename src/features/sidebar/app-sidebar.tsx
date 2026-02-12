@@ -181,8 +181,8 @@ export function AppSidebar() {
   };
 
   return (
-    <div className="w-64 h-full bg-white border-r border-gray-200 overflow-y-auto flex flex-col">
-      <div className="p-4 border-b border-gray-200">
+    <div className="w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex flex-col">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-lg font-semibold">Market Tree</h2>
       </div>
       <div className="p-2 flex-1 overflow-y-auto">{rootNodes.map((node) => renderNode(node))}</div>

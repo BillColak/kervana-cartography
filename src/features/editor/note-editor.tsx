@@ -162,7 +162,7 @@ export function NoteEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white border-l border-gray-200">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div>

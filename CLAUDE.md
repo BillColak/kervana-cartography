@@ -1,124 +1,134 @@
 # Kervana Cartography
 
-A desktop application for market research and validation, built with Tauri v2 + Vite + React + TypeScript.
-
-## Project Overview
-
-Kervana is a visual market research tool that uses a tree/graph structure to organize and validate market opportunities. It's inspired by the "3 Core Markets" framework (Health, Wealth, Relationships) and helps users drill down from broad markets into specific niches.
+AI-powered market cartography and niche discovery platform. Built with Tauri v2 + Vite + React + TypeScript.
 
 ## Tech Stack
 
 - **Frontend**: React 18 + TypeScript + Vite
 - **Desktop**: Tauri v2
-- **UI**: Tailwind CSS 3 + shadcn/ui components
-- **State**: Zustand
-- **Canvas**: ReactFlow (for node graph visualization)
+- **UI**: Tailwind CSS 3 + shadcn/ui + lucide-react icons
+- **State**: Zustand (2 stores: main + research)
+- **Canvas**: ReactFlow (node graph visualization)
+- **Editor**: Plate.js (rich text with markdown serialization)
+- **Layout**: Dagre (auto tree layout)
 - **Database**: SQLite (via Rust/rusqlite) with FTS5 for search
-- **Linting**: Biome + Ultracite preset
+- **AI**: OpenAI-compatible API with response caching
+- **Linting**: Biome
 
 ## Architecture
 
 ### Directory Structure
 
-The project follows a **feature-based** structure for better LLM navigation:
-
 ```
 src/
-├── app/                     # App entry, providers, global styles
+├── app/                          # App entry, providers, global styles
 ├── features/
-│   ├── canvas/              # ReactFlow market tree canvas
-│   ├── editor/              # Note editor (stub textarea for now)
-│   ├── sidebar/             # Tree navigation sidebar
-│   ├── research/            # AI research panel (stub)
-│   └── settings/            # Settings dialog (stub)
-├── components/ui/           # shadcn/ui primitives
-├── actions/                 # Tauri IPC command wrappers
-├── db/                      # Database schema (future Drizzle)
-├── hooks/                   # Shared React hooks
-├── lib/                     # Utilities (store, cn, tauri invoke)
-└── types/                   # Shared TypeScript types
+│   ├── canvas/                   # ReactFlow market tree canvas
+│   │   ├── market-canvas.tsx     # Main canvas component
+│   │   ├── add-node-dialog.tsx   # Create node dialog
+│   │   ├── canvas-context-menu.tsx # Right-click menu (edit, AI research, delete)
+│   │   ├── auto-layout.ts       # Dagre tree layout
+│   │   └── nodes/               # Custom ReactFlow node renderers
+│   ├── editor/                   # Plate.js rich text editor
+│   │   ├── note-editor.tsx       # Main editor with metadata panel
+│   │   ├── plate-editor.tsx      # Plate.js editor wrapper
+│   │   ├── editor-toolbar.tsx    # Floating selection toolbar
+│   │   ├── kits/                 # Plate.js plugin kits
+│   │   └── nodes/                # Plate.js node renderers
+│   ├── research/                 # AI research panel
+│   │   └── research-panel.tsx    # Tabs: Sub-Niches, Pain Points, Validation
+│   ├── sidebar/                  # Tree navigation sidebar
+│   ├── toolbar/                  # Top toolbar (add, layout, search, export, dark mode)
+│   └── export/                   # Markdown/JSON export
+├── actions/                      # Tauri IPC command wrappers
+│   ├── nodes.ts                  # Node CRUD + search
+│   ├── edges.ts                  # Edge CRUD
+│   └── research.ts               # AI research commands
+├── components/ui/                # shadcn/ui primitives
+├── hooks/                        # Shared hooks (keyboard shortcuts, dark mode)
+├── lib/
+│   ├── store.ts                  # Main Zustand store (nodes, edges, UI state)
+│   ├── research-store.ts         # Research Zustand store (jobs, polling, auto-expand)
+│   ├── tauri.ts                  # Tauri invoke wrapper
+│   └── utils.ts                  # cn() utility
+└── types/
+    └── market.ts                 # MarketNodeData, NodeLevel, etc.
 ```
-
-### Core Types (src/types/market.ts)
-
-- **MarketNodeData**: Represents a node in the market tree (id, label, level, color, markdown, tags, painPoints, audiences, marketSize, competition, validationScore, parentId, researchStatus, position, timestamps)
-- **MarketEdgeData**: Connects nodes (id, sourceId, targetId, color)
-- **NodeLevel**: "root" | "core-market" | "submarket" | "niche" | "sub-niche"
-- **ResearchStatus**: "not-started" | "in-progress" | "complete"
-- **CompetitionLevel**: "low" | "medium" | "high"
 
 ### Backend (src-tauri/)
 
-- **Database**: SQLite with tables `nodes`, `edges`, `nodes_fts` (FTS5 virtual table)
-- **Tauri Commands**:
-  - `get_all_nodes`, `get_node`, `create_node`, `update_node`, `delete_node`
-  - `get_edges`, `create_edge`, `delete_edge`
-  - `search_nodes` (full-text search)
-- **Seed Data**: Pre-populated with "3 Core Markets" root structure (Health, Wealth, Relationships)
+```
+src-tauri/src/
+├── main.rs                       # Tauri setup, DB init, command registration
+├── seed.rs                       # Initial "3 Core Markets" seed data
+└── ai/
+    ├── mod.rs                    # Module exports
+    ├── models.rs                 # Rust types (SubNiche, PainPoint, Validation, ResearchJob)
+    ├── prompts.rs                # Prompt templates for expand/pain/validate
+    ├── service.rs                # LLM HTTP client with SHA256 response caching
+    └── research.rs               # Research job Tauri commands
+```
 
-### Frontend State (src/lib/store.ts)
+### Database Tables
 
-Zustand store manages:
-- `nodes: MarketNodeData[]`
-- `edges: MarketEdgeData[]`
-- `selectedNodeId: string | null`
-- `view: ViewMode` ("canvas" | "editor" | "split")
-- `sidebarOpen: boolean`
-- Actions: setNodes, addNode, updateNode, removeNode, setEdges, addEdge, removeEdge, selectNode, setView, toggleSidebar
+- `nodes` — Market tree nodes with metadata
+- `edges` — Parent-child connections
+- `nodes_fts` — FTS5 virtual table for full-text search
+- `research_jobs` — Async AI research job tracking
+- `llm_cache` — SHA256-keyed LLM response cache
 
-### UI Layout
+### Tauri Commands
 
-- **Left**: Sidebar with tree navigation (collapsible)
-- **Center**: ReactFlow canvas (default view)
-- **Right**: Editor panel (slides in when a node is selected)
-- **Bottom** (future): Toolbar with Add Node, Expand (AI), Research, Export, Settings
+**Node CRUD**: `get_all_nodes`, `get_node`, `create_node`, `update_node`, `delete_node`, `search_nodes`
+**Edge CRUD**: `get_edges`, `create_edge`, `delete_edge`
+**AI Research**: `start_research`, `get_research_status`, `get_research_results`, `cancel_research`
 
-### ReactFlow Canvas
+### Core Types (src/types/market.ts)
 
-- Custom `MarketNode` component with:
-  - Color-coded borders based on `level`
-  - Research status indicator (colored dot)
-  - Label and level badge
-- Click node → select it (opens editor panel)
-- Drag node → updates position in database
-- Right-click context menu (future): Expand, Research, Delete, Change Color
-- Auto-layout option (future: dagre/elkjs for tree layout)
+- **MarketNodeData**: id, label, level, color, markdown, tags, painPoints, audiences, marketSize, competition, validationScore, parentId, researchStatus, position, timestamps
+- **NodeLevel**: "root" | "core-market" | "submarket" | "niche" | "sub-niche"
+- **ResearchStatus**: "not-started" | "in-progress" | "complete"
 
-## Development Commands
+## Features
 
-- `bun dev` - Run Vite dev server
-- `bun run build` - Build frontend (TypeScript + Vite)
-- `bun run tauri` - Run Tauri desktop app in dev mode
-- `bun run tauri:build` - Build Tauri desktop app for production
-- `bun lint` - Run Biome linter
-- `source $HOME/.cargo/env && cargo check --manifest-path src-tauri/Cargo.toml` - Check Rust code
+- **Visual Market Tree**: ReactFlow canvas with color-coded, draggable nodes
+- **Rich Text Editor**: Plate.js with headings, lists, bold/italic, links, markdown shortcuts
+- **AI Research**: Right-click → Expand with AI / Pain Points / Validate (via OpenAI-compatible API)
+- **Auto-Expand**: AI suggests sub-niches, auto-creates child nodes on canvas
+- **Validation Scoring**: 0-100 score based on market depth, competition, pain severity, monetization
+- **Auto-Layout**: Dagre tree layout with one click
+- **Full-Text Search**: SQLite FTS5 search across node labels and content
+- **Markdown Export**: Structured document with all metadata
+- **Dark Mode**: Toggle with localStorage persistence
+- **Keyboard Shortcuts**: Ctrl+N (add), Ctrl+E (editor), Ctrl+F (search), Ctrl+L (layout), Ctrl+R (research), Ctrl+\\ (sidebar), Esc (deselect), Delete (remove)
+- **Auto-Save**: 500ms debounced save for all editor fields
 
-## Known Limitations
+## Development
 
-- **Editor**: Currently a stub textarea. Plate.js rich text editor to be added later.
-- **Research Panel**: Stub only. AI-powered research feature planned.
-- **Auto-layout**: Not yet implemented. Nodes are manually positioned.
-- **Context Menu**: Not yet implemented for right-click node operations.
-- **Settings**: Stub dialog only.
+```bash
+bun dev                # Vite dev server
+bun run build          # TypeScript + Vite build
+bun run tauri          # Run Tauri desktop app
+bun lint               # Biome linter
+
+source $HOME/.cargo/env
+cargo check --manifest-path src-tauri/Cargo.toml    # Check Rust
+cargo clippy --manifest-path src-tauri/Cargo.toml   # Rust linting
+```
+
+## Environment Variables
+
+- `OPENAI_API_KEY` — API key for LLM service
+- `OPENAI_API_BASE` — Base URL (default: https://api.openai.com/v1)
+- `OPENAI_MODEL` — Model name (default: gpt-4o)
 
 ## Code Style
 
-- Use **bun** (not npm/yarn)
-- TypeScript strict mode enabled
-- Biome with Ultracite preset for linting/formatting
+- **bun** (not npm/yarn)
+- TypeScript strict mode
+- Biome for linting/formatting
 - Feature-based directory structure
-- Path alias `@/` maps to `src/`
-- Prefer functional React components with hooks
-- Use Zustand for global state
-- Use Tauri IPC commands via `src/actions/` wrappers
-
-## Future Features
-
-- Plate.js rich text editor for markdown notes
-- AI-powered market research (OpenAI/Anthropic integration)
-- Export to PDF/Markdown
-- Auto-layout with dagre/elkjs
-- Validation scoring system
-- Pain point and audience tracking
-- Market size estimation
-- Competition analysis
+- Path alias `@/` → `src/`
+- Functional React components with hooks
+- Zustand for global state
+- Tauri IPC via `src/actions/` wrappers

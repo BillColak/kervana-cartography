@@ -129,7 +129,7 @@ export function MarketCanvas({
   }, [autoLayoutTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="w-full h-full bg-gray-50">
+    <div className="w-full h-full bg-gray-50 dark:bg-gray-900">
       <ReactFlow
         nodes={nodes}
         edges={edges}

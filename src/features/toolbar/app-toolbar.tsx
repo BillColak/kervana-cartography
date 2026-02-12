@@ -10,10 +10,12 @@ import {
   LayoutGrid,
   Maximize,
   Maximize2,
+  Moon,
   PanelLeft,
   PanelLeftClose,
   Plus,
   Search,
+  Sun,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -23,6 +25,8 @@ interface AppToolbarProps {
   onAutoLayout?: () => void;
   onToggleResearch?: () => void;
   showResearch?: boolean;
+  isDark?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 export function AppToolbar({
@@ -31,6 +35,8 @@ export function AppToolbar({
   onAutoLayout,
   onToggleResearch,
   showResearch,
+  isDark,
+  onToggleDarkMode,
 }: AppToolbarProps) {
   const { nodes, selectedNodeId, view, setView, sidebarOpen, toggleSidebar, selectNode } =
     useStore();
@@ -76,7 +82,7 @@ export function AppToolbar({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-4">
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center gap-4">
       {/* Left: Action buttons */}
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={onAddNode} className="gap-2">
@@ -113,6 +119,12 @@ export function AppToolbar({
           <Download className="w-4 h-4" />
           Export
         </Button>
+
+        {onToggleDarkMode && (
+          <Button size="sm" variant="ghost" onClick={onToggleDarkMode} className="h-8 w-8 p-0">
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </Button>
+        )}
       </div>
 
       {/* Center: Search */}

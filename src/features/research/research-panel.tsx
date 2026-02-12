@@ -41,7 +41,7 @@ export function ResearchPanel() {
   const validateResult = getNodeResults(selectedNode.id, "VALIDATE");
 
   return (
-    <div className="h-full flex flex-col bg-white border-l border-gray-200 overflow-y-auto">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 overflow-y-auto">
       <div className="p-4 border-b border-gray-200">
         <h3 className="font-semibold flex items-center gap-2">
           <Brain className="w-4 h-4" />

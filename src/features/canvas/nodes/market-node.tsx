@@ -44,7 +44,7 @@ export function MarketNode({ data, selected }: MarketNodeProps) {
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "px-4 py-3 rounded-lg border-2 bg-white shadow-md min-w-[200px] max-w-[280px] cursor-pointer hover:shadow-lg transition-shadow",
+              "px-4 py-3 rounded-lg border-2 bg-white dark:bg-gray-800 shadow-md min-w-[200px] max-w-[280px] cursor-pointer hover:shadow-lg transition-shadow",
               levelColors[data.level],
               selected && "ring-2 ring-blue-400",
             )}

@@ -3,12 +3,14 @@ import { NoteEditor } from "@/features/editor/note-editor";
 import { ResearchPanel } from "@/features/research/research-panel";
 import { AppSidebar } from "@/features/sidebar/app-sidebar";
 import { AppToolbar } from "@/features/toolbar/app-toolbar";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "@/lib/store";
 import { useCallback, useState } from "react";
 
 function App() {
   const { selectedNodeId, view, sidebarOpen } = useStore();
+  const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [fitViewTrigger, setFitViewTrigger] = useState(0);
   const [autoLayoutTrigger, setAutoLayoutTrigger] = useState(0);
@@ -27,7 +29,7 @@ function App() {
   });
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden">
+    <div className="h-screen w-screen flex overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       {sidebarOpen && <AppSidebar />}
 
       <div className="flex-1 flex flex-col">
@@ -37,6 +39,8 @@ function App() {
           onAutoLayout={handleAutoLayout}
           onToggleResearch={handleToggleResearch}
           showResearch={showResearch}
+          isDark={isDark}
+          onToggleDarkMode={toggleDarkMode}
         />
 
         <div className="flex-1 flex overflow-hidden">
