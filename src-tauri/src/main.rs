@@ -93,6 +93,9 @@ fn get_ai_provider() -> Result<serde_json::Value, String> {
 }
 
 fn main() {
+    // Load .env from project root (two levels up from src-tauri binary)
+    dotenvy::dotenv().ok();
+
     let conn = init_database().expect("Failed to initialize database");
 
     tauri::Builder::default()
