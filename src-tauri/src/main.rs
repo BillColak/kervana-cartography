@@ -77,6 +77,21 @@ fn search_nodes(query: String, state: State<AppState>) -> Result<Vec<MarketNode>
     db::search_nodes(&conn, &query)
 }
 
+#[tauri::command]
+fn get_ai_provider() -> Result<serde_json::Value, String> {
+    match ai::service::LlmService::new() {
+        Ok(service) => Ok(serde_json::json!({
+            "provider": service.provider_name(),
+            "available": true,
+        })),
+        Err(_) => Ok(serde_json::json!({
+            "provider": null,
+            "available": false,
+            "hint": "Set ANTHROPIC_API_KEY or GEMINI_API_KEY"
+        })),
+    }
+}
+
 fn main() {
     let conn = init_database().expect("Failed to initialize database");
 
@@ -99,7 +114,8 @@ fn main() {
             ai::research::get_research_status,
             ai::research::get_research_results,
             ai::research::cancel_research,
-            import::import_obsidian_canvas
+            import::import_obsidian_canvas,
+            get_ai_provider
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
