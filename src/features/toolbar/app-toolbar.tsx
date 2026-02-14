@@ -2,6 +2,7 @@ import { searchNodes } from "@/actions/nodes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { downloadFile, exportTreeAsMarkdown } from "@/features/export/export-markdown";
+import { useErrorStore } from "@/lib/error-store";
 import { useStore } from "@/lib/store";
 import {
   BarChart3,
@@ -54,6 +55,7 @@ export function AppToolbar({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<typeof nodes>([]);
   const [embedding, setEmbedding] = useState(false);
+  const pushError = useErrorStore((s) => s.pushError);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -148,7 +150,7 @@ export function AppToolbar({
             try {
               await embedAllNodes();
             } catch (e) {
-              console.error("Embed failed:", e);
+              pushError(String(e), "embed all nodes");
             }
             setEmbedding(false);
           }}

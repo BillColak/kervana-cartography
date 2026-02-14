@@ -18,6 +18,7 @@ import "@xyflow/react/dist/style.css";
 
 import { getEdges } from "@/actions/edges";
 import { getAllNodes, updateNode } from "@/actions/nodes";
+import { useErrorStore } from "@/lib/error-store";
 import { useStore } from "@/lib/store";
 import type { MarketNodeData } from "@/types/market";
 import { AddNodeDialog } from "./add-node-dialog";
@@ -47,6 +48,7 @@ export function MarketCanvas({
   } = useStore();
   const reactFlowInstance = useRef<ReactFlowInstance<Node<MarketNodeData>, Edge> | null>(null);
   const [snapToGrid, setSnapToGrid] = useState(true);
+  const pushError = useErrorStore((s) => s.pushError);
 
   const [nodes, setNodesState, onNodesChange] = useNodesState<Node<MarketNodeData>>([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState<Edge>([]);
@@ -58,8 +60,8 @@ export function MarketCanvas({
         setNodes(nodesData);
         setEdges(edgesData);
       })
-      .catch(console.error);
-  }, [setNodes, setEdges]);
+      .catch((err) => pushError(String(err), "load nodes/edges"));
+  }, [setNodes, setEdges, pushError]);
 
   // Convert store nodes to ReactFlow nodes
   useEffect(() => {
@@ -105,8 +107,8 @@ export function MarketCanvas({
     updateNode(node.id, {
       x: node.position.x,
       y: node.position.y,
-    }).catch(console.error);
-  }, []);
+    }).catch((err) => pushError(String(err), "save node position"));
+  }, [pushError]);
 
   const onPaneClick = useCallback(() => {
     selectNode(null);
@@ -145,7 +147,7 @@ export function MarketCanvas({
 
       // Save new positions to backend
       for (const node of layoutedNodes) {
-        updateNode(node.id, { x: node.position.x, y: node.position.y }).catch(console.error);
+        updateNode(node.id, { x: node.position.x, y: node.position.y }).catch((err) => pushError(String(err), "auto-layout save"));
       }
 
       // Fit view after layout

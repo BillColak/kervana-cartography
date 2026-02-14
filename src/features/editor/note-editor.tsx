@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { PlateEditorWrapper } from "@/features/editor/plate-editor";
+import { useErrorStore } from "@/lib/error-store";
 import { useStore } from "@/lib/store";
 import type { CompetitionLevel, ResearchStatus } from "@/types/market";
 import { CheckCircle2, Loader2, Plus, X } from "lucide-react";
@@ -36,6 +37,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export function NoteEditor() {
   const { nodes, selectedNodeId, selectNode, updateNode: updateStoreNode } = useStore();
+  const pushError = useErrorStore((s) => s.pushError);
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   const [tags, setTags] = useState<string[]>([]);
@@ -86,7 +88,10 @@ export function NoteEditor() {
               setSaveIndicator("saved");
               setTimeout(() => setSaveIndicator("idle"), 2000);
             })
-            .catch(console.error);
+            .catch((err) => {
+              pushError(String(err), "save markdown");
+              setSaveIndicator("idle");
+            });
         }
       }, 500);
     },
@@ -117,7 +122,7 @@ export function NoteEditor() {
         .then((updatedNode) => {
           updateStoreNode(selectedNode.id, updatedNode);
         })
-        .catch(console.error);
+        .catch((err) => pushError(String(err), "save node metadata"));
     }
   }, [
     debouncedTags,

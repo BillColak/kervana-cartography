@@ -11,6 +11,8 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "@/lib/store";
 import { getAllNodes } from "@/actions/nodes";
 import { getEdges } from "@/actions/edges";
+import { ErrorToast } from "@/features/errors/error-toast";
+import { useErrorStore } from "@/lib/error-store";
 import { useCallback, useState } from "react";
 
 function App() {
@@ -30,15 +32,17 @@ function App() {
   const handleToggleResearch = useCallback(() => setShowResearch((p) => !p), []);
   const handleToggleStats = useCallback(() => setShowStats((p) => !p), []);
 
+  const pushError = useErrorStore((s) => s.pushError);
+
   const handleImportComplete = useCallback(async () => {
     try {
       const [nodesData, edgesData] = await Promise.all([getAllNodes(), getEdges()]);
       setNodes(nodesData);
       setEdges(edgesData);
     } catch (err) {
-      console.error("Failed to reload after import:", err);
+      pushError(String(err), "import reload");
     }
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, pushError]);
 
   useKeyboardShortcuts({
     onAddNode: () => setAddDialogOpen(true),
@@ -98,6 +102,7 @@ function App() {
 
       {/* Status Bar */}
       <StatusBar />
+      <ErrorToast />
 
       <ImportDialog
         open={importDialogOpen}

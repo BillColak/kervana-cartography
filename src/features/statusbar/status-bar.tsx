@@ -1,5 +1,6 @@
 import { useStore } from "@/lib/store";
 import { useResearchStore } from "@/lib/research-store";
+import { useErrorStore } from "@/lib/error-store";
 import { cn } from "@/lib/utils";
 import {
   Activity,
@@ -37,23 +38,27 @@ export function StatusBar() {
   const [embeddingStatus, setEmbeddingStatus] = useState<EmbeddingStatus | null>(null);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "idle">("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const pushError = useErrorStore((s) => s.pushError);
 
   // Check AI provider on mount
   useEffect(() => {
     invoke<AiProviderInfo>("get_ai_provider")
       .then(setAiProvider)
-      .catch(() => setAiProvider({ provider: null, available: false }));
+      .catch((err) => {
+        pushError(String(err), "get AI provider");
+        setAiProvider({ provider: null, available: false });
+      });
     getEmbeddingStatus()
       .then(setEmbeddingStatus)
-      .catch(() => {});
-  }, []);
+      .catch((err) => pushError(String(err), "get embedding status"));
+  }, [pushError]);
 
   // Refresh embedding status when nodes change
   useEffect(() => {
     getEmbeddingStatus()
       .then(setEmbeddingStatus)
-      .catch(() => {});
-  }, [nodes.length]);
+      .catch((err) => pushError(String(err), "refresh embedding status"));
+  }, [nodes.length, pushError]);
 
   // Listen for save events (simulated via interval checking)
   useEffect(() => {
