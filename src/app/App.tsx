@@ -4,6 +4,7 @@ import { ResearchPanel } from "@/features/research/research-panel";
 import { AppSidebar } from "@/features/sidebar/app-sidebar";
 import { ImportDialog } from "@/features/import/import-dialog";
 import { StatsPanel } from "@/features/stats/stats-panel";
+import { StatusBar } from "@/features/statusbar/status-bar";
 import { AppToolbar } from "@/features/toolbar/app-toolbar";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -46,11 +47,12 @@ function App() {
   });
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {sidebarOpen && <AppSidebar />}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="flex-1 flex overflow-hidden">
+        {sidebarOpen && <AppSidebar />}
 
-      <div className="flex-1 flex flex-col">
-        <AppToolbar
+        <div className="flex-1 flex flex-col">
+          <AppToolbar
           onAddNode={() => setAddDialogOpen(true)}
           onFitView={handleFitView}
           onAutoLayout={handleAutoLayout}
@@ -91,7 +93,12 @@ function App() {
             </div>
           )}
         </div>
+        </div>
       </div>
+
+      {/* Status Bar */}
+      <StatusBar />
+
       <ImportDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
