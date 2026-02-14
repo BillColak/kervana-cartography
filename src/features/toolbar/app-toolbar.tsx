@@ -7,9 +7,11 @@ import {
   BarChart3,
   Brain,
   Columns,
+  Database,
   Download,
   FolderInput,
   LayoutGrid,
+  Loader2,
   Maximize,
   Maximize2,
   Moon,
@@ -20,6 +22,7 @@ import {
   Sun,
 } from "lucide-react";
 import { useState } from "react";
+import { embedAllNodes } from "@/actions/embeddings";
 
 interface AppToolbarProps {
   onAddNode: () => void;
@@ -50,6 +53,7 @@ export function AppToolbar({
     useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<typeof nodes>([]);
+  const [embedding, setEmbedding] = useState(false);
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
@@ -134,6 +138,26 @@ export function AppToolbar({
             Import
           </Button>
         )}
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={embedding}
+          onClick={async () => {
+            setEmbedding(true);
+            try {
+              await embedAllNodes();
+            } catch (e) {
+              console.error("Embed failed:", e);
+            }
+            setEmbedding(false);
+          }}
+          className="gap-2"
+          title="Embed all nodes for RAG-powered AI research"
+        >
+          {embedding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+          {embedding ? "Embedding..." : "Embed All"}
+        </Button>
 
         {onToggleDarkMode && (
           <Button size="sm" variant="ghost" onClick={onToggleDarkMode} className="h-8 w-8 p-0">

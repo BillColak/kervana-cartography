@@ -1,5 +1,6 @@
 import { createNode, updateNode } from "@/actions/nodes";
 import { createEdge } from "@/actions/edges";
+import { embedNode, findSimilarNodes } from "@/actions/embeddings";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -136,6 +137,30 @@ export function CanvasContextMenu({
               disabled={isResearching}
             >
               📊 Validate Niche
+            </ContextMenuItem>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuItem
+              onClick={async () => {
+                if (!selectedNode) return;
+                try {
+                  await embedNode(selectedNode.id);
+                  const similar = await findSimilarNodes(selectedNode.id);
+                  if (similar.length > 0) {
+                    const msg = similar
+                      .map((s) => `${s.label} (${Math.round(s.similarity * 100)}%)`)
+                      .join("\n");
+                    alert(`Similar nodes to "${selectedNode.label}":\n\n${msg}`);
+                  } else {
+                    alert("No similar nodes found. Try embedding all nodes first.");
+                  }
+                } catch (e) {
+                  alert(`Error: ${e}`);
+                }
+              }}
+            >
+              🔍 Find Similar Nodes
             </ContextMenuItem>
 
             <ContextMenuSeparator />

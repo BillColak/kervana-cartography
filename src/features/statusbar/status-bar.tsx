@@ -5,6 +5,7 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  Database,
   Circle,
   Clock,
   FileText,
@@ -20,6 +21,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import type { EmbeddingStatus } from "@/actions/embeddings";
+import { getEmbeddingStatus } from "@/actions/embeddings";
 
 interface AiProviderInfo {
   provider: string | null;
@@ -31,6 +34,7 @@ export function StatusBar() {
   const { nodes, edges, selectedNodeId, view } = useStore();
   const activeJobs = useResearchStore((s) => s.activeJobs);
   const [aiProvider, setAiProvider] = useState<AiProviderInfo | null>(null);
+  const [embeddingStatus, setEmbeddingStatus] = useState<EmbeddingStatus | null>(null);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "idle">("idle");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
 
@@ -39,7 +43,17 @@ export function StatusBar() {
     invoke<AiProviderInfo>("get_ai_provider")
       .then(setAiProvider)
       .catch(() => setAiProvider({ provider: null, available: false }));
+    getEmbeddingStatus()
+      .then(setEmbeddingStatus)
+      .catch(() => {});
   }, []);
+
+  // Refresh embedding status when nodes change
+  useEffect(() => {
+    getEmbeddingStatus()
+      .then(setEmbeddingStatus)
+      .catch(() => {});
+  }, [nodes.length]);
 
   // Listen for save events (simulated via interval checking)
   useEffect(() => {
@@ -106,6 +120,22 @@ export function StatusBar() {
         className={aiProvider?.available ? "text-purple-600 dark:text-purple-400" : "text-gray-400"}
         tooltip={aiProvider?.available ? `Connected to ${aiProvider.provider}` : aiProvider?.hint || "No API key configured"}
       />
+
+      {/* RAG / Embedding Status */}
+      {embeddingStatus && (
+        <StatusItem
+          icon={<Database className="w-3 h-3" />}
+          label={`RAG: ${embeddingStatus.embeddedNodes}/${embeddingStatus.totalNodes} (${embeddingStatus.coverage}%)`}
+          className={
+            embeddingStatus.coverage >= 100
+              ? "text-green-600 dark:text-green-400"
+              : embeddingStatus.coverage > 0
+                ? "text-yellow-600 dark:text-yellow-400"
+                : ""
+          }
+          tooltip={`${embeddingStatus.embeddedNodes} of ${embeddingStatus.totalNodes} nodes embedded for RAG`}
+        />
+      )}
 
       <Divider />
 
