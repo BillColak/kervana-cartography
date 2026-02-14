@@ -156,7 +156,7 @@ export function MarketCanvas({
   }, [autoLayoutTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="w-full h-full bg-gray-50 dark:bg-gray-900" onKeyDown={onKeyDown}>
+    <div className="w-full h-full bg-gray-50 dark:cosmic-bg" onKeyDown={onKeyDown}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -195,12 +195,12 @@ export function MarketCanvas({
         />
         <Controls
           showInteractive={false}
-          className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !shadow-md !rounded-lg overflow-hidden [&>button]:!bg-white dark:[&>button]:!bg-gray-800 [&>button]:!border-gray-200 dark:[&>button]:!border-gray-700 [&>button]:!text-gray-600 dark:[&>button]:!text-gray-400 [&>button:hover]:!bg-gray-100 dark:[&>button:hover]:!bg-gray-700"
+          className="!bg-white dark:!bg-[hsl(232,40%,7%)] !border-gray-200 dark:!border-[rgba(139,92,246,0.15)] !shadow-md dark:!shadow-[0_0_20px_rgba(0,0,0,0.4),0_0_8px_rgba(139,92,246,0.1)] !rounded-lg overflow-hidden [&>button]:!bg-white dark:[&>button]:!bg-[hsl(232,40%,7%)] [&>button]:!border-gray-200 dark:[&>button]:!border-[rgba(139,92,246,0.1)] [&>button]:!text-gray-600 dark:[&>button]:!text-[hsl(226,20%,55%)] [&>button:hover]:!bg-gray-100 dark:[&>button:hover]:!bg-[rgba(139,92,246,0.1)]"
         />
 
         {/* Canvas info panel */}
         <Panel position="bottom-right" className="!m-3">
-          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-lg px-3 py-1.5 border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-muted-foreground bg-white/80 dark:bg-card/80 backdrop-blur rounded-lg px-3 py-1.5 border border-gray-200/50 dark:border-[rgba(139,92,246,0.15)]">
             <span>{nodes.length} nodes</span>
             <span>·</span>
             <span>{edges.length} edges</span>

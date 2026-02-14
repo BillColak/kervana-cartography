@@ -47,7 +47,7 @@ function App() {
   });
 
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-white dark:bg-background text-gray-900 dark:text-foreground">
       <div className="flex-1 flex overflow-hidden">
         {sidebarOpen && <AppSidebar />}
 

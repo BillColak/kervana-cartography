@@ -92,7 +92,7 @@ export function StatusBar() {
   };
 
   return (
-    <div className="h-7 bg-gray-100 dark:bg-gray-850 border-t border-gray-200 dark:border-gray-700 px-3 flex items-center gap-0 text-[11px] text-gray-500 dark:text-gray-400 select-none overflow-x-auto">
+    <div className="h-7 bg-gray-100 dark:cosmic-panel border-t border-gray-200 dark:border-border px-3 flex items-center gap-0 text-[11px] text-gray-500 dark:text-muted-foreground select-none overflow-x-auto">
       {/* AI Provider Status */}
       <StatusItem
         icon={

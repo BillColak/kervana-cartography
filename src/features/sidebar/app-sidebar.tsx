@@ -230,7 +230,7 @@ export function AppSidebar() {
   };
 
   return (
-    <div className="w-64 h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <div className="w-64 h-full bg-white dark:cosmic-panel border-r border-gray-200 dark:border-border flex flex-col">
       {/* Header */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">

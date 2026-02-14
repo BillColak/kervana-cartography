@@ -146,7 +146,7 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
       <span contentEditable={false} className="relative">
         <div
           ref={listRef}
-          className="absolute left-0 top-6 z-50 w-56 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg overflow-hidden"
+          className="absolute left-0 top-6 z-50 w-56 rounded-lg border border-gray-200 dark:border-border bg-white dark:bg-card dark:shadow-[0_0_20px_rgba(0,0,0,0.5),0_0_8px_rgba(139,92,246,0.1)] shadow-lg overflow-hidden"
         >
           {filtered.length === 0 ? (
             <div className="px-3 py-2 text-sm text-gray-500">No results</div>
@@ -159,8 +159,8 @@ export function SlashInputElement(props: PlateElementProps<TComboboxInputElement
                   className={cn(
                     "flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors",
                     i === selectedIndex
-                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700",
+                      ? "bg-blue-50 dark:bg-primary/10 text-blue-700 dark:text-primary"
+                      : "text-gray-700 dark:text-foreground hover:bg-gray-100 dark:hover:bg-primary/5",
                   )}
                   onMouseDown={(e) => {
                     e.preventDefault();

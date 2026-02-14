@@ -90,7 +90,7 @@ export function AppToolbar({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2 flex items-center gap-4">
+    <div className="bg-white dark:cosmic-panel border-b border-gray-200 dark:border-border px-4 py-2 flex items-center gap-4">
       {/* Left: Action buttons */}
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={onAddNode} className="gap-2">

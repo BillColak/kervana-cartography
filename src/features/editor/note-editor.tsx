@@ -170,7 +170,7 @@ export function NoteEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
+    <div className="h-full flex flex-col bg-white dark:cosmic-panel border-l border-gray-200 dark:border-border">
       {/* Header */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         {/* Breadcrumb */}

@@ -98,7 +98,7 @@ export function FloatingToolbar({
         {...rootProps}
         ref={floatingRef}
         className={cn(
-          "absolute z-50 flex items-center gap-0.5 overflow-x-auto whitespace-nowrap rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1 shadow-lg",
+          "absolute z-50 flex items-center gap-0.5 overflow-x-auto whitespace-nowrap rounded-lg border border-gray-200 dark:border-border bg-white dark:cosmic-panel dark:cosmic-glow p-1 shadow-lg",
           "max-w-[80vw]",
         )}
       >
