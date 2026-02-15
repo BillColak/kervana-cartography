@@ -8,6 +8,7 @@ import {
   startResearch,
 } from "@/actions/research";
 import { useStore } from "@/lib/store";
+import { parseJsonResponse } from "@/lib/utils";
 import type { NodeLevel } from "@/types/market";
 import { create } from "zustand";
 
@@ -117,7 +118,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
 
 async function autoCreateChildNodes(parentNodeId: string, resultJson: string) {
   try {
-    const parsed = JSON.parse(resultJson);
+    const parsed = parseJsonResponse<{ suggestions?: SubNicheSuggestion[] }>(resultJson);
     const suggestions: SubNicheSuggestion[] = parsed.suggestions || [];
     const store = useStore.getState();
     const parentNode = store.nodes.find((n) => n.id === parentNodeId);

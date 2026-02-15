@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResearchStore } from "@/lib/research-store";
 import { useStore } from "@/lib/store";
+import { parseJsonResponse } from "@/lib/utils";
 import { Brain, Loader2, Target, TrendingUp } from "lucide-react";
 import { useEffect } from "react";
 
@@ -119,7 +120,7 @@ function ExpandTab({
   onRun,
 }: { result: ResearchJob | undefined; isResearching: boolean; onRun: () => void }) {
   const suggestions = result?.resultJson
-    ? (JSON.parse(result.resultJson).suggestions as SubNicheSuggestion[]) || []
+    ? (parseJsonResponse<{ suggestions?: SubNicheSuggestion[] }>(result.resultJson).suggestions ?? [])
     : [];
 
   return (
@@ -164,7 +165,7 @@ function PainPointsTab({
   onRun,
 }: { result: ResearchJob | undefined; isResearching: boolean; onRun: () => void }) {
   const painPoints = result?.resultJson
-    ? (JSON.parse(result.resultJson).pain_points as PainPointResult[]) || []
+    ? (parseJsonResponse<{ pain_points?: PainPointResult[] }>(result.resultJson).pain_points ?? [])
     : [];
 
   return (
@@ -199,7 +200,7 @@ function ValidationTab({
   onRun,
 }: { result: ResearchJob | undefined; isResearching: boolean; onRun: () => void }) {
   const validation = result?.resultJson
-    ? (JSON.parse(result.resultJson).validation as ValidationResult) || null
+    ? (parseJsonResponse<{ validation?: ValidationResult }>(result.resultJson).validation ?? null)
     : null;
 
   return (
