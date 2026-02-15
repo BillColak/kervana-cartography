@@ -139,6 +139,19 @@ pub fn init_tables(conn: &Connection) -> SqliteResult<()> {
         [],
     )?;
 
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS node_embeddings (
+            node_id TEXT PRIMARY KEY,
+            content_hash TEXT NOT NULL,
+            embedding TEXT NOT NULL,
+            model TEXT NOT NULL,
+            dimensions INTEGER NOT NULL,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY(node_id) REFERENCES nodes(id) ON DELETE CASCADE
+        )",
+        [],
+    )?;
+
     Ok(())
 }
 

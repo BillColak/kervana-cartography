@@ -1,5 +1,7 @@
 import { createNode, updateNode } from "@/actions/nodes";
 import { createEdge } from "@/actions/edges";
+import { embedNode, findSimilarNodes } from "@/actions/embeddings";
+import { useErrorStore } from "@/lib/error-store";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -33,6 +35,7 @@ export function CanvasContextMenu({
 }: CanvasContextMenuProps) {
   const { setView, selectNode, updateNode: updateStoreNode, addNode, addEdge } = useStore();
   const { startNodeResearch, isNodeResearching } = useResearchStore();
+  const pushError = useErrorStore((s) => s.pushError);
   const isResearching = selectedNode ? isNodeResearching(selectedNode.id) : false;
 
   const handleEdit = () => {
@@ -54,7 +57,7 @@ export function CanvasContextMenu({
         .then((updatedNode) => {
           updateStoreNode(selectedNode.id, updatedNode);
         })
-        .catch(console.error);
+        .catch((err) => pushError(String(err), "change color"));
     }
   };
 
@@ -64,7 +67,7 @@ export function CanvasContextMenu({
         .then((updatedNode) => {
           updateStoreNode(selectedNode.id, updatedNode);
         })
-        .catch(console.error);
+        .catch((err) => pushError(String(err), "set research status"));
     }
   };
 
@@ -96,7 +99,7 @@ export function CanvasContextMenu({
       }
       selectNode(newNode.id);
     } catch (err) {
-      console.error("Duplicate failed:", err);
+      pushError(String(err), "duplicate node");
     }
   };
 
@@ -136,6 +139,30 @@ export function CanvasContextMenu({
               disabled={isResearching}
             >
               📊 Validate Niche
+            </ContextMenuItem>
+
+            <ContextMenuSeparator />
+
+            <ContextMenuItem
+              onClick={async () => {
+                if (!selectedNode) return;
+                try {
+                  await embedNode(selectedNode.id);
+                  const similar = await findSimilarNodes(selectedNode.id);
+                  if (similar.length > 0) {
+                    const msg = similar
+                      .map((s) => `${s.label} (${Math.round(s.similarity * 100)}%)`)
+                      .join("\n");
+                    alert(`Similar nodes to "${selectedNode.label}":\n\n${msg}`);
+                  } else {
+                    alert("No similar nodes found. Try embedding all nodes first.");
+                  }
+                } catch (e) {
+                  pushError(String(e), "find similar nodes");
+                }
+              }}
+            >
+              🔍 Find Similar Nodes
             </ContextMenuItem>
 
             <ContextMenuSeparator />

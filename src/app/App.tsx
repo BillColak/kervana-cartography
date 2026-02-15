@@ -4,12 +4,15 @@ import { ResearchPanel } from "@/features/research/research-panel";
 import { AppSidebar } from "@/features/sidebar/app-sidebar";
 import { ImportDialog } from "@/features/import/import-dialog";
 import { StatsPanel } from "@/features/stats/stats-panel";
+import { StatusBar } from "@/features/statusbar/status-bar";
 import { AppToolbar } from "@/features/toolbar/app-toolbar";
 import { useDarkMode } from "@/hooks/use-dark-mode";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useStore } from "@/lib/store";
 import { getAllNodes } from "@/actions/nodes";
 import { getEdges } from "@/actions/edges";
+import { ErrorToast } from "@/features/errors/error-toast";
+import { useErrorStore } from "@/lib/error-store";
 import { useCallback, useState } from "react";
 
 function App() {
@@ -29,15 +32,17 @@ function App() {
   const handleToggleResearch = useCallback(() => setShowResearch((p) => !p), []);
   const handleToggleStats = useCallback(() => setShowStats((p) => !p), []);
 
+  const pushError = useErrorStore((s) => s.pushError);
+
   const handleImportComplete = useCallback(async () => {
     try {
       const [nodesData, edgesData] = await Promise.all([getAllNodes(), getEdges()]);
       setNodes(nodesData);
       setEdges(edgesData);
     } catch (err) {
-      console.error("Failed to reload after import:", err);
+      pushError(String(err), "import reload");
     }
-  }, [setNodes, setEdges]);
+  }, [setNodes, setEdges, pushError]);
 
   useKeyboardShortcuts({
     onAddNode: () => setAddDialogOpen(true),
@@ -46,11 +51,12 @@ function App() {
   });
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {sidebarOpen && <AppSidebar />}
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-white dark:bg-background text-gray-900 dark:text-foreground">
+      <div className="flex-1 flex overflow-hidden">
+        {sidebarOpen && <AppSidebar />}
 
-      <div className="flex-1 flex flex-col">
-        <AppToolbar
+        <div className="flex-1 flex flex-col">
+          <AppToolbar
           onAddNode={() => setAddDialogOpen(true)}
           onFitView={handleFitView}
           onAutoLayout={handleAutoLayout}
@@ -91,7 +97,13 @@ function App() {
             </div>
           )}
         </div>
+        </div>
       </div>
+
+      {/* Status Bar */}
+      <StatusBar />
+      <ErrorToast />
+
       <ImportDialog
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}

@@ -39,9 +39,9 @@ export function MarketNode({ data, selected }: MarketNodeProps) {
         <TooltipTrigger asChild>
           <div
             className={cn(
-              "px-4 py-3 rounded-xl border-2 bg-white dark:bg-gray-800 shadow-md min-w-[200px] max-w-[280px] cursor-pointer transition-all duration-200",
-              "hover:shadow-lg hover:-translate-y-0.5",
-              selected && "ring-2 ring-blue-400 shadow-blue-100 dark:shadow-blue-900/20",
+              "px-4 py-3 rounded-xl border-2 bg-white dark:bg-card shadow-md min-w-[200px] max-w-[280px] cursor-pointer transition-all duration-200",
+              "hover:shadow-lg hover:-translate-y-0.5 dark:hover:shadow-[0_0_20px_rgba(139,92,246,0.15)]",
+              selected && "ring-2 ring-blue-400 dark:ring-primary shadow-blue-100 dark:shadow-[0_0_25px_rgba(139,92,246,0.25)]",
             )}
             style={{ borderColor: data.color }}
             onDoubleClick={handleDoubleClick}

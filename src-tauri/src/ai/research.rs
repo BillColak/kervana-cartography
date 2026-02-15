@@ -1,6 +1,7 @@
 use rusqlite::Connection;
 use tauri::State;
 
+use super::embeddings::{self, EmbeddingService, RetrievedContext};
 use super::models::ResearchJob;
 use super::prompts;
 use super::service::LlmService;
@@ -47,6 +48,43 @@ fn get_node_ancestors(db: &Connection, node_id: &str) -> Vec<String> {
 
     ancestors.reverse();
     ancestors
+}
+
+/// Build RAG context string from retrieved similar nodes
+fn build_rag_context(contexts: &[RetrievedContext]) -> String {
+    if contexts.is_empty() {
+        return String::new();
+    }
+
+    contexts
+        .iter()
+        .map(|c| format!("[Relevance: {:.0}%]\n{}", c.score * 100.0, c.content))
+        .collect::<Vec<_>>()
+        .join("\n---\n")
+}
+
+/// Try to get RAG context for a node. Returns empty string if embeddings unavailable.
+fn get_rag_context(db: &Connection, node_id: &str, _node_label: &str) -> String {
+    // Try to get the node's embedding
+    let node_emb = embeddings::get_embedding(db, node_id);
+
+    let query_embedding = match node_emb {
+        Some(emb) => emb.embedding,
+        None => {
+            // No embedding for this node — can't do RAG
+            return String::new();
+        }
+    };
+
+    let contexts = embeddings::retrieve_context(
+        db,
+        &query_embedding,
+        node_id,
+        5,   // top-K
+        0.3, // min similarity threshold
+    );
+
+    build_rag_context(&contexts)
 }
 
 fn get_node_context(db: &Connection, node_id: &str) -> (Vec<String>, Vec<String>, String) {
@@ -128,31 +166,32 @@ pub async fn start_research(
         update_job_status(&db, &job_id, "PROCESSING", None, None);
     }
 
-    // Build prompts based on job type
+    // Build prompts based on job type (with RAG context)
     let (system_prompt, user_prompt) = {
         let db = state.db.lock().unwrap();
         let label = get_node_label(&db, &node_id)?;
+        let rag_context = get_rag_context(&db, &node_id, &label);
 
         match job_type.as_str() {
             "EXPAND" => {
                 let ancestors = get_node_ancestors(&db, &node_id);
                 (
                     prompts::expand_node_system(),
-                    prompts::expand_node_user(&label, &ancestors),
+                    prompts::expand_node_user(&label, &ancestors, &rag_context),
                 )
             }
             "PAIN_POINTS" => {
                 let (_, _, markdown) = get_node_context(&db, &node_id);
                 (
                     prompts::pain_points_system(),
-                    prompts::pain_points_user(&label, &markdown),
+                    prompts::pain_points_user(&label, &markdown, &rag_context),
                 )
             }
             "VALIDATE" => {
                 let (pain_points, audiences, _) = get_node_context(&db, &node_id);
                 (
                     prompts::validate_niche_system(),
-                    prompts::validate_niche_user(&label, &pain_points, &audiences),
+                    prompts::validate_niche_user_rag(&label, &pain_points, &audiences, &rag_context),
                 )
             }
             _ => return Err("Invalid job type".to_string()),

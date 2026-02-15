@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { PlateEditorWrapper } from "@/features/editor/plate-editor";
+import { useErrorStore } from "@/lib/error-store";
 import { useStore } from "@/lib/store";
 import type { CompetitionLevel, ResearchStatus } from "@/types/market";
-import { Plus, X } from "lucide-react";
+import { CheckCircle2, Loader2, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Debounce helper
@@ -36,6 +37,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export function NoteEditor() {
   const { nodes, selectedNodeId, selectNode, updateNode: updateStoreNode } = useStore();
+  const pushError = useErrorStore((s) => s.pushError);
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
   const [tags, setTags] = useState<string[]>([]);
@@ -52,6 +54,8 @@ export function NoteEditor() {
   // Markdown is managed by PlateEditor; we track it via ref for debounced saves
   const markdownRef = useRef(selectedNode?.markdown ?? "");
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveIndicator, setSaveIndicator] = useState<"idle" | "saving" | "saved">("idle");
+  const [wordCount, setWordCount] = useState(0);
 
   // Load node data when selected
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally sync only on node id change
@@ -64,6 +68,8 @@ export function NoteEditor() {
       setResearchStatus(selectedNode.researchStatus);
       setCompetition(selectedNode.competition || "medium");
       setValidationScore(selectedNode.validationScore || 0);
+      setSaveIndicator("idle");
+      setWordCount(selectedNode.markdown.split(/\s+/).filter(Boolean).length);
     }
   }, [selectedNode?.id]);
 
@@ -71,14 +77,21 @@ export function NoteEditor() {
   const onMarkdownChange = useCallback(
     (md: string) => {
       markdownRef.current = md;
+      setWordCount(md.split(/\s+/).filter(Boolean).length);
+      setSaveIndicator("saving");
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
         if (selectedNode) {
           updateNode(selectedNode.id, { markdown: markdownRef.current })
             .then((updatedNode) => {
               updateStoreNode(selectedNode.id, updatedNode);
+              setSaveIndicator("saved");
+              setTimeout(() => setSaveIndicator("idle"), 2000);
             })
-            .catch(console.error);
+            .catch((err) => {
+              pushError(String(err), "save markdown");
+              setSaveIndicator("idle");
+            });
         }
       }, 500);
     },
@@ -109,7 +122,7 @@ export function NoteEditor() {
         .then((updatedNode) => {
           updateStoreNode(selectedNode.id, updatedNode);
         })
-        .catch(console.error);
+        .catch((err) => pushError(String(err), "save node metadata"));
     }
   }, [
     debouncedTags,
@@ -162,7 +175,7 @@ export function NoteEditor() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700">
+    <div className="h-full flex flex-col bg-white dark:cosmic-panel border-l border-gray-200 dark:border-border">
       {/* Header */}
       <div className="p-3 border-b border-gray-200 dark:border-gray-700">
         {/* Breadcrumb */}
@@ -367,7 +380,45 @@ export function NoteEditor() {
               onChange={onMarkdownChange}
             />
           </div>
-          <p className="text-xs text-gray-500 px-4 py-2">Auto-saves after 500ms</p>
+          <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
+            <div className="flex items-center gap-3">
+              {/* Save indicator */}
+              <div className="flex items-center gap-1">
+                {saveIndicator === "saving" && (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin text-blue-500" />
+                    <span className="text-blue-500">Saving...</span>
+                  </>
+                )}
+                {saveIndicator === "saved" && (
+                  <>
+                    <CheckCircle2 className="w-3 h-3 text-green-500" />
+                    <span className="text-green-600 dark:text-green-400">Saved</span>
+                  </>
+                )}
+                {saveIndicator === "idle" && (
+                  <span>Auto-save</span>
+                )}
+              </div>
+
+              {/* Word count */}
+              <span>{wordCount} {wordCount === 1 ? "word" : "words"}</span>
+
+              {/* Char count */}
+              <span>{markdownRef.current.length} chars</span>
+            </div>
+
+            {/* Node metadata summary */}
+            <div className="flex items-center gap-2">
+              {tags.length > 0 && <span>{tags.length} tags</span>}
+              {painPoints.length > 0 && <span>{painPoints.length} pains</span>}
+              {validationScore > 0 && (
+                <span className={validationScore >= 70 ? "text-green-600" : validationScore >= 40 ? "text-yellow-600" : "text-red-500"}>
+                  Score: {validationScore}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -24,7 +24,7 @@ Guidelines:
         .to_string()
 }
 
-pub fn expand_node_user(node_label: &str, ancestors: &[String]) -> String {
+pub fn expand_node_user(node_label: &str, ancestors: &[String], rag_context: &str) -> String {
     let path = if ancestors.is_empty() {
         node_label.to_string()
     } else {
@@ -34,10 +34,19 @@ pub fn expand_node_user(node_label: &str, ancestors: &[String]) -> String {
         full
     };
 
-    format!(
+    let mut prompt = format!(
         "Market path: {}\n\nSuggest 3-5 sub-niches under \"{}\" that represent specific, profitable market segments worth exploring.",
         path, node_label
-    )
+    );
+
+    if !rag_context.is_empty() {
+        prompt.push_str(&format!(
+            "\n\n--- EXISTING RESEARCH CONTEXT ---\nUse this knowledge from your existing market map to inform your suggestions. Avoid duplicating niches that already exist, and look for gaps or complementary segments.\n\n{}",
+            rag_context
+        ));
+    }
+
+    prompt
 }
 
 pub fn pain_points_system() -> String {
@@ -63,11 +72,20 @@ Guidelines:
         .to_string()
 }
 
-pub fn pain_points_user(node_label: &str, context: &str) -> String {
-    format!(
+pub fn pain_points_user(node_label: &str, context: &str, rag_context: &str) -> String {
+    let mut prompt = format!(
         "Niche: {}\nContext: {}\n\nIdentify 3-5 key pain points that people in the \"{}\" market experience. Focus on frustrations that could be solved with a product or service.",
         node_label, context, node_label
-    )
+    );
+
+    if !rag_context.is_empty() {
+        prompt.push_str(&format!(
+            "\n\n--- EXISTING RESEARCH CONTEXT ---\nConsider these related findings from your market map. Build on existing knowledge and identify pain points not yet covered.\n\n{}",
+            rag_context
+        ));
+    }
+
+    prompt
 }
 
 pub fn validate_niche_system() -> String {
@@ -112,10 +130,30 @@ pub fn validate_niche_user(
         audiences.join(", ")
     };
 
-    format!(
+    let mut prompt = format!(
         "Niche: {}\nKnown pain points: {}\nTarget audiences: {}\n\nScore the market viability of \"{}\" considering the available information.",
         node_label, pains, auds, node_label
-    )
+    );
+
+    prompt
+}
+
+pub fn validate_niche_user_rag(
+    node_label: &str,
+    pain_points: &[String],
+    audiences: &[String],
+    rag_context: &str,
+) -> String {
+    let mut prompt = validate_niche_user(node_label, pain_points, audiences);
+
+    if !rag_context.is_empty() {
+        prompt.push_str(&format!(
+            "\n\n--- EXISTING RESEARCH CONTEXT ---\nUse this context from related niches in the market map to make a more informed assessment. Compare competition, overlap, and complementary opportunities.\n\n{}",
+            rag_context
+        ));
+    }
+
+    prompt
 }
 
 #[cfg(test)]
@@ -133,17 +171,24 @@ mod tests {
 
     #[test]
     fn test_expand_user_with_ancestors() {
-        let result = expand_node_user("Fitness", &["Health".to_string(), "Wellness".to_string()]);
+        let result = expand_node_user("Fitness", &["Health".to_string(), "Wellness".to_string()], "");
         assert!(result.contains("Health > Wellness > Fitness"));
         assert!(result.contains("sub-niches under \"Fitness\""));
     }
 
     #[test]
     fn test_expand_user_no_ancestors() {
-        let result = expand_node_user("Health", &[]);
+        let result = expand_node_user("Health", &[], "");
         assert!(result.contains("Market path: Health"));
         assert!(result.contains("sub-niches under \"Health\""));
         assert!(!result.contains(" > "));
+    }
+
+    #[test]
+    fn test_expand_user_with_rag_context() {
+        let result = expand_node_user("Fitness", &["Health".to_string()], "## Nutrition\nTags: diet, food");
+        assert!(result.contains("EXISTING RESEARCH CONTEXT"));
+        assert!(result.contains("Nutrition"));
     }
 
     #[test]
@@ -156,16 +201,23 @@ mod tests {
 
     #[test]
     fn test_pain_points_user_with_context() {
-        let result = pain_points_user("Yoga", "Ancient practice for flexibility and mindfulness");
+        let result = pain_points_user("Yoga", "Ancient practice for flexibility and mindfulness", "");
         assert!(result.contains("Niche: Yoga"));
         assert!(result.contains("Ancient practice"));
     }
 
     #[test]
     fn test_pain_points_user_empty_context() {
-        let result = pain_points_user("Yoga", "");
+        let result = pain_points_user("Yoga", "", "");
         assert!(result.contains("Niche: Yoga"));
         assert!(result.contains("Context: "));
+    }
+
+    #[test]
+    fn test_pain_points_user_with_rag() {
+        let result = pain_points_user("Yoga", "Flexibility", "## Meditation\nPain: expensive classes");
+        assert!(result.contains("EXISTING RESEARCH CONTEXT"));
+        assert!(result.contains("Meditation"));
     }
 
     #[test]
